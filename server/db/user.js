@@ -99,12 +99,20 @@ homerDB.signup = (user) => {
 //logging in user
 homerDB.login = (user) => {
     
+    let decodedToken;
     //verify that token
-    const decodedToken = jwt.verify(user.token, 'homer_secret')
-    console.log("Decoded Token:", decodedToken)
+    console.log("Encrypted Token:", user.token)
+    jwt.verify(user.token, 'homer_secret', (err, decoded) => {
+        if(err){
+            return console.log("Token Error:", err)
+        }
+        decodedToken = decoded
+        console.log("Decoded Token:", decoded)
+    })
+    
 
     return new Promise((resolve, reject) => {
-        pool.query(`SELECT * from user_login_account WHERE id = ? AND username = ? AND password = ?`, [decodedToken._id, user.username, user.password],  (error, results) => {
+        pool.query(`SELECT * from user_login_account WHERE email = ? AND password = ?`, [decodedToken._email, user.password],  (error, results) => {
             if(error){
                 return reject(error)
             }
@@ -112,6 +120,18 @@ homerDB.login = (user) => {
         }); 
     });
 }
+
+homerDB.findByCredentials = (user) => {
+    return new Promise((resolve, reject) => {
+        pool.query(`SELECT * from user_login_account WHERE email = ?`, [user.email],  (error, results) => {
+            if(error){
+                return reject(error)
+            }
+            return resolve(results)
+        });   
+    }) 
+}
+
 
 
 module.exports = homerDB;
