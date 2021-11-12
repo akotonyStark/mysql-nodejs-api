@@ -2,6 +2,7 @@ const express = require('express')
 const dbUserContext = require('../db/user')
 const jwt = require('jsonwebtoken')
 const { sendWelcomeEmail, sendCancellationEmail } = require('../middleware/email')
+const auth = require('../middleware/auth')
 
 const router = express.Router();
 
@@ -126,7 +127,9 @@ router.get('/login/profile', async (req, res, next) => {
 
         //generate auth token to simulate header token
         //const token = jwt.sign({_id: user.id.toString(), _username: user.username}, 'homer_secret', {expiresIn: '1 day'})
-        const token = req.header('Authorization').replace('Bearer ', '')
+        const token = jwt.sign({_email: user.email}, 'homer_secret', {expiresIn: '1 day'})
+       
+        //const token = req.header('Authorization').replace('Bearer', '')
         //console.log("Token: ", token)
         user.token = token
 
@@ -139,9 +142,12 @@ router.get('/login/profile', async (req, res, next) => {
         if(e.message === 'invalid signature' || e.message === 'invalid token'){
             return res.status(401).send({Error: 'Unauthorized access'})
         }
+        else if(e.message === 'jwt expired'){
+            return res.status(401).send({Error: 'Token expired'})
+        }
        
         console.log("Error:", e.message)
-        res.sendStatus(500)
+        res.sendStatus(500).send()
     }
 });
 
