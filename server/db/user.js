@@ -82,9 +82,10 @@ homerDB.deleteOneUser = (id) => {
 //signing up user
 homerDB.signup = (user) => {
     //generate token
-    const token = jwt.sign({_id: user.id,  _username: user.username}, 'homer_secret', {expiresIn: '1 day'})
+    const token = jwt.sign({_id: user.id,  _email: user.email}, 'homer_secret', {expiresIn: '1 day'})
+    //const token = jwt.sign({_email: user.email,  _password: user.password}, 'homer_secret', {expiresIn: '1 day'})
     user.tokens = token 
-    //console.log(token)
+    console.log("Generated Token:", token)
 
     return new Promise((resolve, reject) => {
         pool.query(`INSERT INTO user_login_account VALUES ('${user.id}', '${user.username}', '${user.email}', '${user.password}', '${user.tokens}')`,  (error, results) => {
@@ -99,20 +100,14 @@ homerDB.signup = (user) => {
 //logging in user
 homerDB.login = (user) => {
     
-    let decodedToken;
+    
     //verify that token
     console.log("Encrypted Token:", user.token)
-    jwt.verify(user.token, 'homer_secret', (err, decoded) => {
-        if(err){
-            return console.log("Token Error:", err)
-        }
-        decodedToken = decoded
-        console.log("Decoded Token:", decoded)
-    })
-    
+    let decodedToken = jwt.verify(user.token, 'homer_secret')
+    console.log("Decoded Token:", decodedToken)    
 
     return new Promise((resolve, reject) => {
-        pool.query(`SELECT * from user_login_account WHERE email = ? AND password = ?`, [decodedToken._email, user.password],  (error, results) => {
+        pool.query(`SELECT * from user_login_account WHERE id = ? AND email = ? AND password = ?`, [decodedToken._id, decodedToken._email, user.password],  (error, results) => {
             if(error){
                 return reject(error)
             }
