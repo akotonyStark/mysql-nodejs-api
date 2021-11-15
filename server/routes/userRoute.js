@@ -123,27 +123,37 @@ router.post('/signUp/profile', async (req, res, next) => {
 router.get('/login/profile', async (req, res, next) => {
     
     try{        
-        const user = req.body           
+        const user_payload = req.body   
+        
+        //FIND USER BY CREDENTIALS
+        const response = await dbUserContext.findByCredentials(user_payload)
+        const user =  response[0]
+
+        if(!user){
+            return res.status(404).send({Error: 'Invalid user credentials'})
+        }
 
         //generate auth token to simulate header token
         //const token = jwt.sign({_id: user.id.toString(), _username: user.username}, 'homer_secret', {expiresIn: '1 day'})
-        const token = jwt.sign({_email: user.email}, 'homer_secret', {expiresIn: '1 day'})
+        //const token = jwt.sign({_email: user.email}, 'homer_secret', {expiresIn: '1 day'})
        
-        //const token = req.header('Authorization').replace('Bearer', '')
+        const token = req.header('Authorization').replace('Bearer ', '')
         //console.log("Token: ", token)
         user.token = token
 
         let results = await dbUserContext.login(user);
+        console.log("Results: ", results)
         if(results.length === 0){
-            res.status(404).send({Message: 'Invalid User Credentials'})
+            res.status(401).send({Message: 'Unauthorized access'})
         }
         res.json(results)
     }catch(e){
         if(e.message === 'invalid signature' || e.message === 'invalid token'){
-            return res.status(401).send({Error: 'Unauthorized access'})
+            return res.status(401).send({Error: 'Invalid Token'})
         }
         else if(e.message === 'jwt expired'){
             return res.status(401).send({Error: 'Token expired'})
+            //renew token to login
         }
        
         console.log("Error:", e.message)
