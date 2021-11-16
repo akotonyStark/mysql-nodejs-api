@@ -119,7 +119,7 @@ router.post('/signUp/profile', async (req, res, next) => {
     }
 });
 
-//logging in user
+//logging in user 
 router.get('/login/profile', async (req, res, next) => {
     
     try{        
@@ -134,11 +134,10 @@ router.get('/login/profile', async (req, res, next) => {
         }
 
         //generate auth token to simulate header token
-        //const token = jwt.sign({_id: user.id.toString(), _username: user.username}, 'homer_secret', {expiresIn: '1 day'})
+        const token = jwt.sign({_id: user.id.toString(), _email: user.email}, 'homer_secret', {expiresIn: '1 hr'})
         //const token = jwt.sign({_email: user.email}, 'homer_secret', {expiresIn: '1 day'})
-       
-        const token = req.header('Authorization').replace('Bearer ', '')
-        //console.log("Token: ", token)
+        //const token = req.header('Authorization').replace('Bearer ', '')
+        console.log("Generated Token: ", token)
         user.token = token
 
         let results = await dbUserContext.login(user);
@@ -160,6 +159,10 @@ router.get('/login/profile', async (req, res, next) => {
         res.sendStatus(500).send()
     }
 });
+
+router.get('/login/auth', auth, async(req, res) => {
+    res.send(req.user)
+})
 
 
 module.exports = router
